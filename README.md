@@ -7,12 +7,14 @@ The integration domain remains `hass_nuki_bt`; existing config entries,
 pairing credentials and entity identities are retained. Do not delete your
 configured locks or pair them again when switching code sources.
 
-### Optional Bluetooth recovery
+### Bluetooth recovery enabled by default
 
-Under **Settings > Devices & services > Nuki BT > Configure**, enable
-**status and post-action connection recovery** for each affected lock.
-It is disabled by default and changing it reloads only that device.
-Other options and pairing data are preserved.
+Starting with 0.0.22, **status and post-action connection recovery** is enabled
+automatically for new and existing devices without a saved override. No extra
+activation step is needed after pairing. An explicitly saved `false` is respected.
+For troubleshooting, disable recovery under **Settings > Devices & services >
+Nuki BT > Configure**. Changing it reloads only that device; other options and
+pairing data are preserved. Version 0.0.21 required opting in explicitly.
 
 The workaround immediately releases a pending state-response wait when its
 BLE client disconnects, using the library's existing bounded read retry.
@@ -37,8 +39,8 @@ that version and must be reviewed before upgrading the library.
    of type Integration and download a tagged release. Only one repository
    may manage this component directory. Do not restart between removal and
    installation; restore the old code if installation fails.
-4. Restart Home Assistant, enable the recovery option on affected locks,
-   and verify status/log retrieval, entity IDs and lock operation.
+4. Restart Home Assistant and verify status/log retrieval, entity IDs and lock
+   operation. Recovery is enabled automatically unless explicitly disabled.
 
 Rollback replaces only component code and its HACS source; keep the existing
 HA entries and lock permissions. Do not restore an entire HA configuration

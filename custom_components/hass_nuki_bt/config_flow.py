@@ -242,7 +242,7 @@ class NukiFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class NukiOptionsFlow(config_entries.OptionsFlow):
-    """Configure the optional BLE recovery workaround for one device."""
+    """Configure BLE recovery, enabled by default, for one device."""
 
     async def async_step_init(self, user_input=None):
         """Show and save connection options without starting a pairing flow."""

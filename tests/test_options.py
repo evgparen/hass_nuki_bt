@@ -13,6 +13,9 @@ import voluptuous as vol
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPONENT = ROOT / "custom_components/hass_nuki_bt"
+CONSTANTS_SPEC = importlib.util.spec_from_file_location("nuki_constants", COMPONENT / "const.py")
+CONSTANTS = importlib.util.module_from_spec(CONSTANTS_SPEC)
+CONSTANTS_SPEC.loader.exec_module(CONSTANTS)
 
 
 class OptionsBase:
@@ -34,15 +37,19 @@ def compiled_node(path, name, namespace):
 class Tests(unittest.IsolatedAsyncioTestCase):
     def make_flow(self, options):
         ns = dict(config_entries=SimpleNamespace(OptionsFlow=OptionsBase), vol=vol,
-                  CONF_STATUS_RECONNECT="status_reconnect", DEFAULT_STATUS_RECONNECT=False)
+                  CONF_STATUS_RECONNECT="status_reconnect", DEFAULT_STATUS_RECONNECT=CONSTANTS.DEFAULT_STATUS_RECONNECT)
         cls = compiled_node(COMPONENT / "config_flow.py", "NukiOptionsFlow", ns)
         flow = cls()
         flow.config_entry = SimpleNamespace(options=options, data={"pairing": "synthetic"})
         return flow
 
-    async def test_missing_option_is_disabled(self):
+    async def test_missing_option_is_enabled(self):
         flow = self.make_flow({})
         result = await flow.async_step_init()
+        self.assertEqual(result["data_schema"]({}), {"status_reconnect": True})
+
+    async def test_explicit_opt_out_is_preserved(self):
+        result = await self.make_flow({"status_reconnect": False}).async_step_init()
         self.assertEqual(result["data_schema"]({}), {"status_reconnect": False})
 
     async def test_saved_true_is_shown_and_boolean_required(self):
@@ -63,9 +70,9 @@ class Tests(unittest.IsolatedAsyncioTestCase):
         setup = next(n for n in tree.body if getattr(n, "name", "") == "async_setup_entry")
         node = next(n for n in setup.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "device_class" for t in n.targets))
         original, recovery = object(), object()
-        for options, expected in [({}, original), ({"status_reconnect": False}, original), ({"status_reconnect": True}, recovery)]:
+        for options, expected in [({}, recovery), ({"status_reconnect": False}, original), ({"status_reconnect": True}, recovery)]:
             ns = dict(entry=SimpleNamespace(options=options), NukiDevice=original,
-                      StatusReconnectNukiDevice=recovery, CONF_STATUS_RECONNECT="status_reconnect", DEFAULT_STATUS_RECONNECT=False)
+                      StatusReconnectNukiDevice=recovery, CONF_STATUS_RECONNECT="status_reconnect", DEFAULT_STATUS_RECONNECT=CONSTANTS.DEFAULT_STATUS_RECONNECT)
             exec(compile(ast.Module(body=[node], type_ignores=[]), "selection", "exec"), ns)
             self.assertIs(ns["device_class"], expected)
 

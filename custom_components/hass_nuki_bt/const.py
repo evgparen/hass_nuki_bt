@@ -19,4 +19,4 @@ CONF_DEVICE_PUBLIC_KEY = "device_public_key"
 CONF_APP_ID = "app_id"
 CONF_CLIENT_TYPE = "client_type"
 CONF_STATUS_RECONNECT = "status_reconnect"
-DEFAULT_STATUS_RECONNECT = False
+DEFAULT_STATUS_RECONNECT = True
