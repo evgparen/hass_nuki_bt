@@ -1,5 +1,16 @@
 {
     "title": "Nuki Türöffner",
+    "options": {
+        "step": {
+            "init": {
+                "title": "Bluetooth-Verbindungswiederherstellung",
+                "description": "Experimentelle Abhilfe bei verzögerten Befehlen nach Bluetooth-Abbrüchen. Lädt dieses Gerät neu, ohne seine Kopplung zu ändern.",
+                "data": {
+                    "status_reconnect": "Verbindungswiederherstellung für Status- und Folgeabfragen aktivieren"
+                }
+            }
+        }
+    },
     "config": {
         "flow_title": "{name} ({address})",
         "step": {

@@ -1,0 +1,3 @@
+pyNukiBT==0.0.20
+voluptuous==0.16.0
+async-timeout==5.0.1

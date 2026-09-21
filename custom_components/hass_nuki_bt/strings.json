@@ -40,6 +40,17 @@
             "pairing": "Nuki is not in pairing mode.\nPut Nuki in pairing mode by pressing the button 5 seconds, Then try again"
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Bluetooth connection recovery",
+                "description": "Experimental workaround for delayed commands after Bluetooth disconnects. Reloads this device without changing its pairing.",
+                "data": {
+                    "status_reconnect": "Enable status and post-action connection recovery"
+                }
+            }
+        }
+    },
     "services": {
         "update_nuki_time": {
           "name": "Update Nuki time",

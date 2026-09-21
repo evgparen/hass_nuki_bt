@@ -26,9 +26,12 @@ from .const import (
     CONF_PRIVATE_KEY,
     CONF_PUBLIC_KEY,
     CONF_CLIENT_TYPE,
+    CONF_STATUS_RECONNECT,
+    DEFAULT_STATUS_RECONNECT,
     DOMAIN,
 )
 from .coordinator import NukiDataUpdateCoordinator
+from .status_reconnect import StatusReconnectNukiDevice
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -60,7 +63,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     else:
         client_type = NukiConst.NukiClientType.BRIDGE
 
-    device = NukiDevice(
+    device_class = (
+        StatusReconnectNukiDevice
+        if entry.options.get(CONF_STATUS_RECONNECT, DEFAULT_STATUS_RECONNECT)
+        else NukiDevice
+    )
+    if device_class is StatusReconnectNukiDevice:
+        _LOGGER.info("Nuki %s: status reconnect recovery enabled", entry.unique_id)
+    device = device_class(
         address=entry.data[CONF_DEVICE_ADDRESS],
         auth_id=bytes.fromhex(entry.data[CONF_AUTH_ID]),
         nuki_public_key=bytes.fromhex(entry.data[CONF_DEVICE_PUBLIC_KEY]),
@@ -113,11 +123,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
     if unloaded := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
+        coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+        try:
+            await coordinator.device.disconnect()
+        except BleakError as ex:
+            _LOGGER.debug("Nuki disconnect during unload failed: %s", type(ex).__name__)
     return unloaded
 
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload config entry."""
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
+    await hass.config_entries.async_reload(entry.entry_id)

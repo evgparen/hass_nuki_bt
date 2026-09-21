@@ -2,4 +2,4 @@ colorlog
 homeassistant
 pip
 ruff
-pyNukiBT @ git+https://github.com/ronengr/pyNukiBT.git@main
+pyNukiBT==0.0.20

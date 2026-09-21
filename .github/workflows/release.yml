@@ -9,21 +9,33 @@ jobs:
   release:
     name: "Release"
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
     steps:
       - name: "Checkout the repository"
         uses: "actions/checkout@v7.0.0"
 
-      - name: "Adjust version number"
-        shell: "bash"
+      - uses: actions/setup-python@v6.3.0
+        with:
+          python-version: "3.14"
+      - run: python -m pip install -r requirements-test.txt
+      - run: python -m unittest discover -s tests -v
+      - name: "Verify version"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
-            "${{ github.workspace }}/custom_components/hass_nuki_bt/manifest.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          manifest = json.loads(Path("custom_components/hass_nuki_bt/manifest.json").read_text())
+          assert manifest["version"] == os.environ["RELEASE_TAG"].removeprefix("v")
+          PY
 
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |
           cd "${{ github.workspace }}/custom_components/hass_nuki_bt"
-          zip hass_nuki_bt.zip -r ./
+          zip hass_nuki_bt.zip -r ./ -x '*/__pycache__/*' '*.pyc'
 
       - name: "Upload the ZIP file to the release"
         uses: softprops/action-gh-release@v3.0.1

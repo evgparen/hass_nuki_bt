@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import bluetooth
 from homeassistant.const import CONF_NAME, CONF_PIN
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import (
     SelectSelector,
@@ -27,6 +28,8 @@ from .const import (
     CONF_PRIVATE_KEY,
     CONF_PUBLIC_KEY,
     CONF_CLIENT_TYPE,
+    CONF_STATUS_RECONNECT,
+    DEFAULT_STATUS_RECONNECT,
     DOMAIN,
     LOGGER,
 )
@@ -36,6 +39,12 @@ class NukiFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for Nuki."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Configure connection recovery without changing pairing data."""
+        return NukiOptionsFlow()
 
     task_one = None
     task_two = None
@@ -229,6 +238,28 @@ class NukiFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=_errors,
+        )
+
+
+class NukiOptionsFlow(config_entries.OptionsFlow):
+    """Configure the optional BLE recovery workaround for one device."""
+
+    async def async_step_init(self, user_input=None):
+        """Show and save connection options without starting a pairing flow."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title="", data={**self.config_entry.options, **user_input}
+            )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(
+                    CONF_STATUS_RECONNECT,
+                    default=self.config_entry.options.get(
+                        CONF_STATUS_RECONNECT, DEFAULT_STATUS_RECONNECT
+                    ),
+                ): bool,
+            }),
         )
 
 
